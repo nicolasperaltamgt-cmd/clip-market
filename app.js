@@ -845,6 +845,12 @@ document.addEventListener("click", async event => {
   if (d.tab) return orders(d.tab);
   if (d.order) { toast.classList.remove("show"); return needUser(() => order(d.order)); }
   if (d.view === "saved") return savedView();
+  if (d.view === "notes") return needUser(notesView);
+  if (d.noteTab) { $("#pagetoast").classList.remove("show"); return needUser(() => orders(d.noteTab)); }
+  if ("enableNotes" in d) {
+    try { await Notification.requestPermission(); } catch {}
+    return notesView();
+  }
   if ("brief" in d) return writeBrief(b.form);
   if (d.report) return needUser(() => report(d.report));
   if (d.view === "newcampaign") return needUser(newCampaign);
@@ -1059,10 +1065,86 @@ document.querySelector(".flow-tabs")?.addEventListener("keydown", e => {
   selectTab(tabs[(i + (e.key === "ArrowRight" ? 1 : tabs.length - 1)) % tabs.length]);
 });
 
+/* ---------- Notificaciones ---------- */
+const baseTitle = document.title;
+let notes = [], noteChannel = null, noteUid = null;
+const unread = () => notes.filter(n => !n.read_at).length;
+function paintBell() {
+  const bell = $("#bell"), badge = bell.querySelector(".badge"), n = unread();
+  bell.hidden = !user;
+  badge.textContent = n > 9 ? "9+" : String(n);
+  badge.hidden = !n;
+  bell.setAttribute("aria-label", n ? `Notificaciones, ${n} sin leer` : "Notificaciones");
+  document.title = (n ? `(${n}) ` : "") + baseTitle;
+}
+async function loadNotes() {
+  if (!user || !sb) { notes = []; return paintBell(); }
+  const { data } = await sb.from("cm_notifications").select("*").order("created_at", { ascending:false }).limit(40);
+  notes = data || [];
+  paintBell();
+}
+function ago(d) {
+  const m = Math.round((Date.now() - new Date(d)) / 60000);
+  if (m < 1) return "Recién";
+  if (m < 60) return `Hace ${m} min`;
+  const h = Math.round(m / 60);
+  if (h < 24) return `Hace ${h} h`;
+  const days = Math.round(h / 24);
+  return days < 7 ? `Hace ${days} ${days === 1 ? "día" : "días"}` : new Date(d).toLocaleDateString("es-AR", { day:"numeric", month:"short" });
+}
+function deviceNotesHtml() {
+  if (!("Notification" in window)) return "";
+  if (Notification.permission === "granted") return '<p class="fine notes-foot">✓ Avisos activados en este dispositivo.</p>';
+  if (Notification.permission === "denied") return '<p class="fine notes-foot">Bloqueaste los avisos en este navegador. Podés activarlos desde la configuración del sitio.</p>';
+  return '<div class="notes-foot"><button class="outline" data-enable-notes>Activar avisos en este dispositivo</button></div>';
+}
+function notesView() {
+  show(title("Notificaciones") + (notes.length
+    ? `<div class="notes">${notes.map(n => `<button class="note-item${n.read_at ? "" : " unread"}" data-note-tab="${esc(n.tab)}">
+        <b>${esc(n.title)}</b>${n.body ? `<span>${esc(n.body)}</span>` : ""}<small>${ago(n.created_at)}</small></button>`).join("")}</div>`
+    : '<p class="notes-empty">Todavía no tenés notificaciones. Acá vas a ver pedidos, pagos, entregas, postulaciones y estrellas.</p>')
+    + deviceNotesHtml());
+  markRead();
+}
+async function markRead() {
+  const ids = notes.filter(n => !n.read_at).map(n => n.id);
+  if (!ids.length) return;
+  const now = new Date().toISOString();
+  notes.forEach(n => { if (!n.read_at) n.read_at = now; });
+  paintBell();
+  await sb.from("cm_notifications").update({ read_at:now }).in("id", ids);
+}
+function pageToast(n) {
+  const t = $("#pagetoast");
+  t.innerHTML = `<span><b>${esc(n.title)}</b>${n.body ? `<small>${esc(n.body)}</small>` : ""}</span><button class="primary" data-note-tab="${esc(n.tab)}">Ver</button>`;
+  t.classList.add("show");
+  clearTimeout(t._timer);
+  t._timer = setTimeout(() => t.classList.remove("show"), 7000);
+}
+function listenNotes() {
+  if (noteUid === (user?.id || null)) return;
+  noteUid = user?.id || null;
+  if (noteChannel) { sb.removeChannel(noteChannel); noteChannel = null; }
+  if (!user) return;
+  noteChannel = sb.channel("notes-" + user.id)
+    .on("postgres_changes", { event:"INSERT", schema:"public", table:"cm_notifications", filter:`user_id=eq.${user.id}` }, ({ new:n }) => {
+      if (notes.some(x => x.id === n.id)) return;
+      notes = [n, ...notes].slice(0, 40);
+      paintBell();
+      if (dialog.open && panel.querySelector(".notes, .notes-empty")) return notesView();
+      pageToast(n);
+      if (document.hidden && "Notification" in window && Notification.permission === "granted") {
+        try { new Notification(n.title, { body:n.body || "", icon:"icon.svg", tag:"cm-" + n.id }); } catch {}
+      }
+    })
+    .subscribe();
+}
+
 /* ---------- Inicio ---------- */
 function setUser(u) {
   user = u || null;
   $("#account").textContent = user ? myName().split(" ")[0] : "Entrar";
+  if (sb) { listenNotes(); loadNotes().catch(() => {}); }
   if (campaigns.length) renderCampaigns();
   if (user && pending) { const next = pending; pending = null; setTimeout(next, 0); }
   else if (user && dialog.open && panel.querySelector('[data-form="signup"],[data-form="login"]')) dialog.close();
