@@ -56,6 +56,12 @@ h1 i{font-style:italic;font-weight:800}
   padding:12px 22px;font-weight:800;font-size:16px}
 .go:hover{background:#D02776}
 
+.trust{display:flex;flex-wrap:wrap;justify-content:center;gap:6px 18px;list-style:none;padding:0;margin:-4px 0 0;font-size:14px;font-weight:600;color:#ebdce8}
+.trust li{display:flex;align-items:center;gap:6px}
+.trust li:first-child{color:#9ff0cf}
+.trust li+li::before{content:"✓";color:var(--brand-hi);font-weight:800}
+.why-hl{border-color:#bfe8d6!important;background:linear-gradient(160deg,#f2fbf7,#fff)!important}
+.why-hl .why-ico{background:var(--mint-soft);color:var(--mint)}
 .cats{display:flex;gap:8px;width:min(100%,1100px);overflow-x:auto;scrollbar-width:none;padding:2px;justify-content:safe center}
 .cats::-webkit-scrollbar{display:none}
 .cats button{flex:none;display:flex;align-items:center;gap:6px;border:1px solid #ffffff38;background:#ffffff0d;color:#fff;
@@ -429,6 +435,7 @@ textarea{resize:vertical}
   .search input[type=search]{padding:10px 6px;font-size:15px}
   .go{padding:11px 14px}.go span{display:none}
   .cats{justify-content:flex-start}
+  .trust{font-size:12.5px;gap:4px 12px}
   .rail{grid-auto-columns:minmax(150px,46%)}
   .feed-tile{padding:14px}.feed-tile b{font-size:20px}
   .flow{margin-top:44px}
