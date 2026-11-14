@@ -848,8 +848,15 @@ document.addEventListener("click", async event => {
   if (d.view === "notes") return needUser(notesView);
   if (d.noteTab) { $("#pagetoast").classList.remove("show"); return needUser(() => orders(d.noteTab)); }
   if ("enableNotes" in d) {
-    try { await Notification.requestPermission(); } catch {}
-    return notesView();
+    b.disabled = true; b.textContent = "Activando…";
+    try { await enablePush(); return notesView(); }
+    catch (e) {
+      b.disabled = false; b.textContent = "Activar avisos en este dispositivo";
+      const n = panel.querySelector(".notes-foot .notice");
+      if (n) n.textContent = e.message === "denied" ? "No diste permiso. Podés habilitarlo desde la configuración del sitio en tu navegador."
+        : e.message === "unsupported" ? "Este navegador no permite avisos. Probá con Chrome." : "No pudimos activar los avisos. Probá de nuevo.";
+      return;
+    }
   }
   if ("brief" in d) return writeBrief(b.form);
   if (d.report) return needUser(() => report(d.report));
@@ -1092,11 +1099,35 @@ function ago(d) {
   const days = Math.round(h / 24);
   return days < 7 ? `Hace ${days} ${days === 1 ? "día" : "días"}` : new Date(d).toLocaleDateString("es-AR", { day:"numeric", month:"short" });
 }
+const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
+const standalone = matchMedia("(display-mode: standalone)").matches || navigator.standalone === true;
+const pushOn = () => { try { return localStorage.getItem("cm-push") === "1"; } catch { return false; } };
+function b64ToBytes(s) {
+  const p = "=".repeat((4 - s.length % 4) % 4), raw = atob((s + p).replace(/-/g, "+").replace(/_/g, "/"));
+  return Uint8Array.from(raw, c => c.charCodeAt(0));
+}
+// Activa las notificaciones push: llegan aunque la página esté cerrada.
+async function enablePush() {
+  if (!("serviceWorker" in navigator) || !("PushManager" in window)) throw new Error("unsupported");
+  const perm = await Notification.requestPermission();
+  if (perm !== "granted") throw new Error("denied");
+  const reg = await navigator.serviceWorker.register("sw.js");
+  await navigator.serviceWorker.ready;
+  const { data:key } = await sb.rpc("cm_push_public_key");
+  if (!key) throw new Error("nokey");
+  const sub = (await reg.pushManager.getSubscription()) || await reg.pushManager.subscribe({ userVisibleOnly:true, applicationServerKey:b64ToBytes(key) });
+  const j = sub.toJSON();
+  const { error } = await sb.rpc("cm_push_subscribe", { p_endpoint:j.endpoint, p_p256dh:j.keys.p256dh, p_auth:j.keys.auth });
+  if (error) throw error;
+  try { localStorage.setItem("cm-push", "1"); } catch {}
+}
 function deviceNotesHtml() {
-  if (!("Notification" in window)) return "";
-  if (Notification.permission === "granted") return '<p class="fine notes-foot">✓ Avisos activados en este dispositivo.</p>';
+  if (isIOS && !standalone) return `<div class="notes-foot ios-tip"><b>¿Avisos en iPhone?</b>
+    <span>Tocá <b>Compartir</b> y después <b>Agregar a inicio</b>. Abrí Clip Market desde ese ícono y activá los avisos acá.</span></div>`;
+  if (!("Notification" in window) || !("serviceWorker" in navigator)) return "";
+  if (Notification.permission === "granted" && pushOn()) return '<p class="fine notes-foot">✓ Avisos activados en este dispositivo, aunque la página esté cerrada.</p>';
   if (Notification.permission === "denied") return '<p class="fine notes-foot">Bloqueaste los avisos en este navegador. Podés activarlos desde la configuración del sitio.</p>';
-  return '<div class="notes-foot"><button class="outline" data-enable-notes>Activar avisos en este dispositivo</button></div>';
+  return '<div class="notes-foot"><button class="primary cta" data-enable-notes>Activar avisos en este dispositivo</button><p class="fine">Te llegan aunque tengas la página cerrada.</p><p class="notice" role="alert"></p></div>';
 }
 function notesView() {
   show(title("Notificaciones") + (notes.length
@@ -1133,7 +1164,7 @@ function listenNotes() {
       paintBell();
       if (dialog.open && panel.querySelector(".notes, .notes-empty")) return notesView();
       pageToast(n);
-      if (document.hidden && "Notification" in window && Notification.permission === "granted") {
+      if (!pushOn() && document.hidden && "Notification" in window && Notification.permission === "granted") {
         try { new Notification(n.title, { body:n.body || "", icon:"icon.svg", tag:"cm-" + n.id }); } catch {}
       }
     })
@@ -1157,6 +1188,11 @@ if (sb) {
   sb.auth.onAuthStateChange((_event, session) => setTimeout(() => setUser(session?.user), 0));
 }
 loadClips().then(openPortfolio);
+// Al tocar una notificación push, se abre la lista de notificaciones
+if (new URLSearchParams(location.search).get("notas")) {
+  history.replaceState(null, "", location.pathname + location.hash);
+  sb?.auth.getSession().then(({ data }) => { if (data.session) { user = data.session.user; loadNotes().then(notesView); } });
+}
 (function payReturn() {
   const r = new URLSearchParams(location.search).get("pago");
   if (!r) return;

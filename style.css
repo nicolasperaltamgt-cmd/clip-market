@@ -224,6 +224,8 @@ header nav button.bell{position:relative;width:40px;height:40px;padding:0;displa
 .note-item.unread{background:var(--brand-soft);border-color:#f3c3da}
 .note-item.unread::before{background:var(--brand)}
 .notes-empty{margin-top:12px}
+.ios-tip{display:grid;gap:4px;background:var(--soft);border-radius:14px;padding:12px 14px;font-size:14px}
+.notes-foot .fine{margin-top:6px}
 .notes-foot{margin-top:14px}
 .page-toast{position:fixed;left:50%;bottom:calc(18px + env(safe-area-inset-bottom,0px));z-index:40;transform:translate(-50%,20px);
   display:flex;align-items:center;gap:12px;width:min(440px,calc(100% - 24px));background:var(--night);color:#fff;border-radius:18px;
