@@ -1,0 +1,211 @@
+<!doctype html>
+<html lang="es-AR">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="Las marcas eligen por el video, no por los seguidores. Subí un clip y que te contraten. Gratis y sin comisión.">
+<meta property="og:title" content="Clip Market · Tu próximo trabajo empieza con un clip">
+<meta property="og:description" content="Las marcas eligen por el video, no por los seguidores.">
+<meta property="og:image" content="hero.webp">
+<meta name="theme-color" content="#181323">
+<link rel="icon" href="icon.svg"><title>Clip Market · Tu próximo trabajo empieza con un clip</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js" defer></script>
+<script src="app.js" defer></script>
+</head>
+<body>
+<header>
+  <a class="brand" href="#"><img src="icon.svg" alt=""><span>Clip Market</span></a>
+  <nav aria-label="Principal">
+    <a href="#campanas" class="nav-link">Campañas</a>
+    <button data-view="orders" class="nav-orders">Encargos</button>
+    <button data-view="account" id="account">Entrar</button>
+    <button class="primary cta" data-view="upload">Subir video</button>
+  </nav>
+</header>
+<main>
+  <section class="top">
+    <h1>Tu próximo <em>trabajo</em> empieza con un <i>clip.</i></h1>
+    <p class="hero-intro">Las marcas eligen por el video, no por los seguidores.</p>
+    <form class="search" id="searchform" role="search" aria-label="Buscar creadores">
+      <label class="where"><svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M12 21s-6.5-6.2-6.5-11a6.5 6.5 0 0 1 13 0c0 4.8-6.5 11-6.5 11Z" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="12" cy="10" r="2.3" fill="currentColor"/></svg>
+        <select id="province" aria-label="Provincia"></select></label>
+      <input id="search" type="search" placeholder="Producto, rubro o creador" autocomplete="off" aria-label="Buscar">
+      <button class="go"><svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><circle cx="11" cy="11" r="7" fill="none" stroke="currentColor" stroke-width="2.6"/><path d="m16.5 16.5 4 4" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"/></svg><span>Buscar</span></button>
+      <input id="category" type="hidden" value="">
+    </form>
+    <div class="cats" id="cats" role="toolbar" aria-label="Atajos"></div>
+    <div class="rail" id="rail" aria-label="Destacados"></div>
+    <p class="live-stats" id="livestats" hidden><i aria-hidden="true"></i><span></span></p>
+  </section>
+
+  <section class="market" id="buscar" aria-labelledby="gridtitle">
+    <div class="market-head">
+      <h2 id="gridtitle">Todos los videos</h2>
+      <div class="filters">
+        <select id="sort" aria-label="Orden">
+          <option value="foryou">Para vos</option>
+          <option value="top">Mejor calificados</option>
+          <option value="views">Más vistos</option>
+          <option value="new">Más nuevos</option>
+          <option value="cheap">Menor precio</option>
+        </select>
+        <select id="price" aria-label="Precio">
+          <option value="">Cualquier precio</option>
+          <option value="30000">Hasta $ 30.000</option>
+          <option value="60000">Hasta $ 60.000</option>
+          <option value="120000">Hasta $ 120.000</option>
+        </select>
+        <button type="button" class="clear" id="clear" hidden>Limpiar</button>
+      </div>
+    </div>
+    <p class="why">Ordenado por el video, no por los seguidores: suben los que se miran completos, reciben ♥ y venden bien.</p>
+    <div id="explorar" tabindex="-1">
+      <div class="grid" id="grid"></div>
+    </div>
+  </section>
+
+  <section class="camps" id="campanas" aria-labelledby="camps-title">
+    <div class="camps-head">
+      <div><h2 id="camps-title">Campañas abiertas</h2>
+        <p>Marcas que buscan videos ahora. Postulate con un clip, sin importar tus seguidores.</p></div>
+      <button class="primary" data-view="newcampaign">Publicar campaña</button>
+    </div>
+    <div class="camp-list" id="camplist"></div>
+  </section>
+
+  <section class="flow" aria-labelledby="flow-title">
+    <h2 id="flow-title">Todo en un solo lugar</h2>
+    <div class="flow-tabs" role="tablist" aria-label="Cómo funciona">
+      <button role="tab" id="t1" aria-controls="p1" aria-selected="true"><b>1</b>Subí tu clip</button>
+      <button role="tab" id="t2" aria-controls="p2" aria-selected="false" tabindex="-1"><b>2</b>Deslizá</button>
+      <button role="tab" id="t3" aria-controls="p3" aria-selected="false" tabindex="-1"><b>3</b>Pedí</button>
+      <button role="tab" id="t4" aria-controls="p4" aria-selected="false" tabindex="-1"><b>4</b>Entregá y cobrá</button>
+      <button role="tab" id="t5" aria-controls="p5" aria-selected="false" tabindex="-1"><b>5</b>Calificá</button>
+    </div>
+
+    <div class="flow-panel" role="tabpanel" id="p1" aria-labelledby="t1">
+      <div class="flow-copy">
+        <h3>Te contratan por cómo grabás</h3>
+        <p>Subí un video mostrando un producto. No hace falta tener seguidores: si el video rinde, sube en el feed.</p>
+        <ul class="tags"><li>Cero seguidores</li><li>Gratis</li><li>Desde el celular</li></ul>
+        <button class="primary cta" data-view="upload">Subir mi video</button>
+      </div>
+      <div class="mock mock-upload" aria-hidden="true">
+        <div class="mock-drop"><b>clip-matcha.mp4</b><span>Subiendo… 72%</span><i><i></i></i></div>
+        <div class="mock-row"><span>Rubro</span><b>Gastronomía</b></div>
+        <div class="mock-row"><span>Provincia</span><b>Córdoba</b></div>
+        <div class="mock-btn">Publicar</div>
+      </div>
+    </div>
+
+    <div class="flow-panel" role="tabpanel" id="p2" aria-labelledby="t2" hidden>
+      <div class="flow-copy">
+        <h3>Como Tinder, pero de UGC</h3>
+        <p>Las marcas deslizan videos: a la derecha guardan, a la izquierda pasan. El feed aprende qué buscan.</p>
+        <ul class="tags"><li>Video primero</li><li>Ranking por el video</li><li>Sin seguidores</li></ul>
+        <button class="primary cta" data-feed>Deslizá creadores</button>
+      </div>
+      <div class="mock mock-swipe" aria-hidden="true">
+        <img src="clip-2.webp" alt="" class="back"><img src="clip-1.webp" alt="" class="front">
+        <div class="mock-actions"><span class="x">✕</span><span class="h">♥</span></div>
+      </div>
+    </div>
+
+    <div class="flow-panel" role="tabpanel" id="p3" aria-labelledby="t3" hidden>
+      <div class="flow-copy">
+        <h3>Pedí un video en un minuto</h3>
+        <p>Elegís el tipo de video, la duración, cuánto pagás y para cuándo. El creador lo ve en sus encargos.</p>
+        <ul class="tags"><li>Precio a la vista</li><li>Sin intermediarios</li><li>Sin comisión</li></ul>
+      </div>
+      <div class="mock mock-order" aria-hidden="true">
+        <strong>Pedido para Sofi Vega</strong>
+        <div class="mock-chips"><span class="on">Cómo se usa</span><span>Unboxing</span><span>Reseña</span></div>
+        <div class="mock-chips"><span>15 s</span><span class="on">30 s</span><span>60 s</span></div>
+        <div class="mock-row"><span>Pagás</span><b>$ 45.000</b></div>
+        <div class="mock-row"><span>Entrega</span><b>22/11</b></div>
+        <div class="mock-btn">Enviar pedido</div>
+      </div>
+    </div>
+
+    <div class="flow-panel" role="tabpanel" id="p4" aria-labelledby="t4" hidden>
+      <div class="flow-copy">
+        <h3>Seguí cada pedido hasta la entrega</h3>
+        <p>El creador acepta, graba y entrega con un link. La marca aprueba y le paga directo.</p>
+        <ul class="tags"><li>Estados claros</li><li>Pago directo</li><li>Sin comisión</li></ul>
+      </div>
+      <div class="mock mock-track" aria-hidden="true">
+        <strong>Serum · de Lumi Skin</strong>
+        <div class="mock-steps"><span class="on">Enviado</span><span class="on">En producción</span><span class="on">Entregado</span><span>Aprobado</span></div>
+        <div class="mock-row"><span>Video</span><b>drive.google.com/…</b></div>
+        <div class="mock-btn">Aprobar video</div>
+      </div>
+    </div>
+
+    <div class="flow-panel" role="tabpanel" id="p5" aria-labelledby="t5" hidden>
+      <div class="flow-copy">
+        <h3>Estrellas por cómo vendió</h3>
+        <p>Al aprobar, la marca califica el video de 1 a 5. Las estrellas se ven en el perfil y suben al creador en el feed.</p>
+        <ul class="tags"><li>Reseñas reales</li><li>Visibles para todos</li><li>Suben en el ranking</li></ul>
+      </div>
+      <div class="mock mock-rate" aria-hidden="true">
+        <strong>¿Cómo vendió el video?</strong>
+        <div class="mock-stars">★★★★<span>★</span></div>
+        <p>“Vendimos el doble esa semana.”</p>
+        <div class="mock-btn">Aprobar y calificar</div>
+      </div>
+    </div>
+  </section>
+
+  <section class="why-us" aria-labelledby="why-title">
+    <h2 id="why-title">Por qué Clip Market</h2>
+    <div class="why-grid">
+      <article><span class="why-ico"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20.5s-7.5-4.4-7.5-10.2A4.3 4.3 0 0 1 12 7.6a4.3 4.3 0 0 1 7.5 2.7c0 5.8-7.5 10.2-7.5 10.2Z"/></svg></span><h3>Encontrás en minutos</h3><p>Deslizá videos y guardá creadores. No esperás postulaciones.</p></article>
+      <article><span class="why-ico"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 17l6-6 4 4 8-8"/><path d="M15 7h6v6"/></svg></span><h3>Sin seguidores</h3><p>El ranking mira cómo rinde el video, no el tamaño del perfil.</p></article>
+      <article><span class="why-ico"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 19 19 5"/><circle cx="7" cy="7" r="2.5"/><circle cx="17" cy="17" r="2.5"/></svg></span><h3>0% de comisión</h3><p>Durante el piloto, lo que pagás le llega completo al creador.</p></article>
+      <article><span class="why-ico"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 12v8H4v-8"/><path d="M2 7h20v5H2Z"/><path d="M12 22V7"/><path d="M12 7c-1.5-3-5-3.5-5-1s3 1 5 1Zm0 0c1.5-3 5-3.5 5-1s-3 1-5 1Z"/></svg></span><h3>Canje sin costo</h3><p>Pagá con dinero, con producto o con las dos cosas.</p></article>
+      <article><span class="why-ico"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 4v6h6"/><path d="M20 20v-6h-6"/><path d="M5.6 15a7 7 0 0 0 12.4 2M18.4 9A7 7 0 0 0 6 7"/></svg></span><h3>Hasta 2 cambios</h3><p>Si el video no quedó como querías, pedí ajustes desde el encargo.</p></article>
+      <article><span class="why-ico"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m12 3.5 2.6 5.3 5.9.9-4.3 4.1 1 5.8L12 16.8l-5.2 2.8 1-5.8-4.3-4.1 5.9-.9Z"/></svg></span><h3>Reseñas de ventas</h3><p>Las estrellas dicen cómo vendió cada video. El sello Verificado, quién entrega.</p></article>
+    </div>
+  </section>
+
+  <section class="faq" aria-labelledby="faq-title">
+    <h2 id="faq-title">Antes de que preguntes</h2>
+    <details><summary>¿Necesito seguidores?</summary><p>No. Las marcas eligen por el video. Si tu clip se mira completo y recibe ♥, sube en el feed.</p></details>
+    <details><summary>¿Cuánto cuesta?</summary><p>Nada. Clip Market es gratis para marcas y creadores, y no cobra comisión durante el piloto.</p></details>
+    <details><summary>¿Cómo se paga?</summary><p>Con dinero, con canje (producto) o con las dos cosas. Con el pago protegido, la marca paga con Mercado Pago y el dinero queda retenido hasta que aprueba el video; después se le transfiere al creador. El canje no tiene costo extra.</p></details>
+    <details><summary>¿Y si el video no me convence?</summary><p>Cada encargo incluye hasta 2 rondas de cambios. Los pedís desde el encargo, antes de aprobar.</p></details>
+    <details><summary>¿Qué es una campaña?</summary><p>Una marca publica qué video quiere, cuánto paga por video y cuántos cupos tiene. Los creadores se postulan con un clip y la marca elige.</p></details>
+    <details><summary>¿Qué significan las estrellas?</summary><p>Cuando una marca aprueba un video, lo califica de 1 a 5 según cómo vendió. Son reseñas reales y suben al creador en el ranking.</p></details>
+  </section>
+
+  <footer class="site-footer">
+    <div><strong>Clip Market</strong><p>Martín Gleiser, fundador · Uriel Ilan Vogt, cofundador</p></div>
+    <nav aria-label="Información legal">
+      <a href="privacidad.html">Privacidad</a>
+      <a href="terminos.html">Términos</a>
+      <a href="mailto:infoclipmarket@gmail.com">infoclipmarket@gmail.com</a>
+    </nav>
+  </footer>
+</main>
+
+<div class="feed" id="feed" role="dialog" aria-modal="true" aria-label="Para vos" hidden>
+  <div class="feed-top">
+    <button type="button" class="feed-btn" id="feedclose" aria-label="Cerrar">×</button>
+    <strong>Para vos</strong>
+    <div class="feed-top-right">
+      <button type="button" class="feed-btn" id="feedsound" aria-label="Activar sonido"></button>
+      <button type="button" class="saved-btn" data-view="saved" aria-label="Ver guardados"><span aria-hidden="true">♥</span> <b id="savedcount">0</b></button>
+    </div>
+  </div>
+  <div class="deck" id="deck" aria-live="polite"></div>
+  <div class="deck-actions" id="deckactions">
+    <button type="button" class="round pass" data-swipe="pass" aria-label="Pasar"><svg viewBox="0 0 24 24" width="26" height="26" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"/></svg></button>
+    <button type="button" class="round info" data-swipe="info" aria-label="Ver detalle"><svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><circle cx="12" cy="8" r="4" fill="none" stroke="currentColor" stroke-width="2.2"/><path d="M4.5 20a7.5 7.5 0 0 1 15 0" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg></button>
+    <button type="button" class="round like" data-swipe="like" aria-label="Me gusta, guardar"><svg viewBox="0 0 24 24" width="30" height="30" aria-hidden="true"><path d="M12 20.5s-7.5-4.4-7.5-10.2A4.3 4.3 0 0 1 12 7.6a4.3 4.3 0 0 1 7.5 2.7c0 5.8-7.5 10.2-7.5 10.2Z" fill="currentColor"/></svg></button>
+  </div>
+  <p class="deck-toast" id="decktoast" role="status"></p>
+</div>
+<dialog aria-labelledby="dialog-title"><button class="close" aria-label="Cerrar">×</button><div id="panel"></div></dialog>
+</body></html>
